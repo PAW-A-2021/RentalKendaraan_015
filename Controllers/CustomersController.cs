@@ -47,7 +47,7 @@ namespace RentalKendaraan.Controllers
         // GET: Customers/Create
         public IActionResult Create()
         {
-            ViewData["IdGender"] = new SelectList(_context.Genders, "IdGender", "IdGender");
+            ViewData["IdGender"] = new SelectList(_context.Genders, "IdGender", "NamaGender");
             return View();
         }
 
