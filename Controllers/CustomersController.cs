@@ -19,10 +19,25 @@ namespace RentalKendaraan.Controllers
         }
 
         // GET: Customers
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string ktsd, string searchStr)
         {
-            var rentKendaraanContext = _context.Customers.Include(c => c.IdGenderNavigation);
-            return View(await rentKendaraanContext.ToListAsync());
+            var ktsdList = new List<string>();
+            var ktsdQuery = from d in _context.Customers orderby d.IdGenderNavigation select d.IdGenderNavigation.NamaGender;
+
+            ktsdList.AddRange(ktsdQuery.Distinct());
+            ViewBag.ktsd = new SelectList(ktsdList);
+            var menu = from m in _context.Customers.Include(k => k.IdGenderNavigation) select m;
+
+            if (!string.IsNullOrEmpty(ktsd))
+            {
+                menu = menu.Where(x => x.IdGenderNavigation.NamaGender == ktsd);
+            }
+
+            if (!string.IsNullOrEmpty(searchStr))
+            {
+                menu = menu.Where(s => s.Alamat.Contains(searchStr) || s.NamaCustomer.Contains(searchStr) || s.Nik.Contains(searchStr) || s.NoHp.Contains(searchStr));
+            }
+            return View(await menu.ToListAsync());
         }
 
         // GET: Customers/Details/5
@@ -64,7 +79,7 @@ namespace RentalKendaraan.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["IdGender"] = new SelectList(_context.Genders, "IdGender", "IdGender", customer.IdGender);
+            ViewData["IdGender"] = new SelectList(_context.Genders, "IdGender", "NamaGender", customer.IdGender);
             return View(customer);
         }
 
@@ -81,7 +96,7 @@ namespace RentalKendaraan.Controllers
             {
                 return NotFound();
             }
-            ViewData["IdGender"] = new SelectList(_context.Genders, "IdGender", "IdGender", customer.IdGender);
+            ViewData["IdGender"] = new SelectList(_context.Genders, "IdGender", "NamaGender", customer.IdGender);
             return View(customer);
         }
 
@@ -117,7 +132,7 @@ namespace RentalKendaraan.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["IdGender"] = new SelectList(_context.Genders, "IdGender", "IdGender", customer.IdGender);
+            ViewData["IdGender"] = new SelectList(_context.Genders, "IdGender", "NamaGender", customer.IdGender);
             return View(customer);
         }
 

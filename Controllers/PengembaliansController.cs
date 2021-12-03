@@ -19,10 +19,25 @@ namespace RentalKendaraan.Controllers
         }
 
         // GET: Pengembalians
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string ktsd, string searchStr)
         {
-            var rentKendaraanContext = _context.Pengembalians.Include(p => p.IdKondisiNavigation).Include(p => p.IdPeminjamanNavigation);
-            return View(await rentKendaraanContext.ToListAsync());
+            var ktsdList = new List<string>();
+            var ktsdQuery = from d in _context.Pengembalians orderby d.IdKondisiNavigation select d.IdKondisiNavigation.NamaKondisi;
+
+            ktsdList.AddRange(ktsdQuery.Distinct());
+            ViewBag.ktsd = new SelectList(ktsdList);
+            var menu = from m in _context.Pengembalians.Include(p => p.IdKondisiNavigation).Include(p => p.IdPeminjamanNavigation) select m;
+
+            if (!string.IsNullOrEmpty(ktsd))
+            {
+                menu = menu.Where(x => x.IdKondisiNavigation.NamaKondisi == ktsd);
+            }
+
+            if (!string.IsNullOrEmpty(searchStr))
+            {
+                menu = menu.Where(s => s.Denda.ToString().Contains(searchStr) || s.IdKondisiNavigation.NamaKondisi.Contains(searchStr) || s.IdPeminjamanNavigation.IdCustomerNavigation.NamaCustomer.Contains(searchStr));
+            }
+            return View(await menu.ToListAsync());
         }
 
         // GET: Pengembalians/Details/5

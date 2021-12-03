@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 #nullable disable
 
@@ -13,6 +14,8 @@ namespace RentalKendaraan.Models
         }
 
         public int IdJaminan { get; set; }
+
+        [Required(ErrorMessage = "Nama Jaminan Tidak Boleh Kosong")]
         public string NamaJaminan { get; set; }
 
         public virtual ICollection<Peminjaman> Peminjamen { get; set; }

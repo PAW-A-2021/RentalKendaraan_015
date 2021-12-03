@@ -19,10 +19,25 @@ namespace RentalKendaraan.Controllers
         }
 
         // GET: Peminjamen
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string ktsd, string searchStr)
         {
-            var rentKendaraanContext = _context.Peminjamen.Include(p => p.IdCustomerNavigation).Include(p => p.IdJaminanNavigation).Include(p => p.IdKendaraanNavigation);
-            return View(await rentKendaraanContext.ToListAsync());
+            var ktsdList = new List<string>();
+            var ktsdQuery = from d in _context.Peminjamen orderby d.IdJaminanNavigation select d.IdJaminanNavigation.NamaJaminan;
+
+            ktsdList.AddRange(ktsdQuery.Distinct());
+            ViewBag.ktsd = new SelectList(ktsdList);
+            var menu = from m in _context.Peminjamen.Include(p => p.IdCustomerNavigation).Include(p => p.IdJaminanNavigation).Include(p => p.IdKendaraanNavigation) select m;
+            
+            if (!string.IsNullOrEmpty(ktsd))
+            {
+                menu = menu.Where(x => x.IdJaminanNavigation.NamaJaminan == ktsd);
+            }
+
+            if (!string.IsNullOrEmpty(searchStr))
+            {
+                menu = menu.Where(s => s.IdCustomerNavigation.NamaCustomer.Contains(searchStr) || s.IdJaminanNavigation.NamaJaminan.Contains(searchStr) || s.IdKendaraanNavigation.NamaKendaraan.Contains(searchStr) || s.Biaya.ToString().Contains(searchStr));
+            }
+            return View(await menu.ToListAsync());
         }
 
         // GET: Peminjamen/Details/5
