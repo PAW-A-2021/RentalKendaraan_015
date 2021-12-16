@@ -19,7 +19,7 @@ namespace RentalKendaraan.Controllers
         }
 
         // GET: Customers
-        public async Task<IActionResult> Index(string ktsd, string searchStr)
+        public async Task<IActionResult> Index(string ktsd, string searchStr, string sortOrder, string currFilter, int? pageNumber)
         {
             var ktsdList = new List<string>();
             var ktsdQuery = from d in _context.Customers orderby d.IdGenderNavigation select d.IdGenderNavigation.NamaGender;
@@ -37,7 +37,45 @@ namespace RentalKendaraan.Controllers
             {
                 menu = menu.Where(s => s.Alamat.Contains(searchStr) || s.NamaCustomer.Contains(searchStr) || s.Nik.Contains(searchStr) || s.NoHp.Contains(searchStr));
             }
-            return View(await menu.ToListAsync());
+
+            ViewData["CurrentSort"] = sortOrder;
+
+            if (searchStr != null)
+            {
+                pageNumber = 1;
+            }
+            else
+            {
+                searchStr = currFilter;
+            }
+
+            ViewData["CurrentFilter"] = searchStr;
+
+            int pageSize = 5;
+
+            ViewData["NameSortParam"] = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["NikSortParam"] = sortOrder == "Nik" ? "nik_desc" : "Nik";
+
+            switch (sortOrder)
+            {
+                case "name_desc":
+                    menu = menu.OrderByDescending(s => s.NamaCustomer);
+                    break;
+
+                case "Nik":
+                    menu = menu.OrderBy(s => s.Nik);
+                    break;
+
+                case "nik_desc":
+                    menu = menu.OrderByDescending(s => s.Nik);
+                    break;
+
+                default:
+                    menu = menu.OrderBy(s => s.NamaCustomer);
+                    break;
+            }
+
+            return View(await PaginatedList<Customer>.CreateAsync(menu.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Customers/Details/5

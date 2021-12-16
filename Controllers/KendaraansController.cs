@@ -19,7 +19,7 @@ namespace RentalKendaraan.Controllers
         }
 
         // GET: Kendaraans
-        public async Task<IActionResult> Index(string ktsd, string searchStr)
+        public async Task<IActionResult> Index(string ktsd, string searchStr, string sortOrder, string currFilter, int? pageNumber)
         {
             var ktsdList = new List<string>();
             var ktsdQuery = from d in _context.Kendaraans orderby d.Ketersediaan select d.Ketersediaan;
@@ -38,8 +38,46 @@ namespace RentalKendaraan.Controllers
             {
                 menu = menu.Where(s => s.NoPolisi.Contains(searchStr) || s.NamaKendaraan.Contains(searchStr) || s.NoStnk.Contains(searchStr));
             }
-            
-            return View(await menu.ToListAsync());
+
+            ViewData["CurrentSort"] = sortOrder;
+
+            if (searchStr != null)
+            {
+                pageNumber = 1;
+            }
+            else
+            {
+                searchStr = currFilter;
+            }
+
+            ViewData["CurrentFilter"] = searchStr;
+
+            int pageSize = 5;
+
+            ViewData["NameSortParam"] = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewData["NopolSortParam"] = sortOrder == "Nopol" ? "nopol_desc" : "Nopol";
+
+            switch (sortOrder)
+            {
+                case "name_desc":
+                    menu = menu.OrderByDescending(s => s.NamaKendaraan);
+                    break;
+
+                case "Nopol":
+                    menu = menu.OrderBy(s => s.NoPolisi);
+                    break;
+
+                case "nopol_desc":
+                    menu = menu.OrderByDescending(s => s.NoPolisi);
+                    break;
+
+                default:
+                    menu = menu.OrderBy(s => s.NamaKendaraan);
+                    break;
+            }
+
+
+            return View(await PaginatedList<Kendaraan>.CreateAsync(menu.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Kendaraans/Details/5

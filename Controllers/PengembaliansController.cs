@@ -19,7 +19,7 @@ namespace RentalKendaraan.Controllers
         }
 
         // GET: Pengembalians
-        public async Task<IActionResult> Index(string ktsd, string searchStr)
+        public async Task<IActionResult> Index(string ktsd, string searchStr, string sortOrder, string currFilter, int? pageNumber)
         {
             var ktsdList = new List<string>();
             var ktsdQuery = from d in _context.Pengembalians orderby d.IdKondisiNavigation select d.IdKondisiNavigation.NamaKondisi;
@@ -37,7 +37,45 @@ namespace RentalKendaraan.Controllers
             {
                 menu = menu.Where(s => s.Denda.ToString().Contains(searchStr) || s.IdKondisiNavigation.NamaKondisi.Contains(searchStr) || s.IdPeminjamanNavigation.IdCustomerNavigation.NamaCustomer.Contains(searchStr));
             }
-            return View(await menu.ToListAsync());
+
+            ViewData["CurrentSort"] = sortOrder;
+
+            if (searchStr != null)
+            {
+                pageNumber = 1;
+            }
+            else
+            {
+                searchStr = currFilter;
+            }
+
+            ViewData["CurrentFilter"] = searchStr;
+
+            int pageSize = 5;
+
+            ViewData["KondisiSortParam"] = string.IsNullOrEmpty(sortOrder) ? "kond_desc" : "";
+            ViewData["DateSortParam"] = sortOrder == "Date" ? "date_desc" : "Date";
+
+            switch (sortOrder)
+            {
+                case "kond_desc":
+                    menu = menu.OrderByDescending(s => s.IdKondisiNavigation.NamaKondisi);
+                    break;
+
+                case "Date":
+                    menu = menu.OrderBy(s => s.TglPengembalian);
+                    break;
+
+                case "date_desc":
+                    menu = menu.OrderByDescending(s => s.TglPengembalian);
+                    break;
+
+                default:
+                    menu = menu.OrderBy(s => s.IdKondisiNavigation.NamaKondisi);
+                    break;
+            }
+
+            return View(await PaginatedList<Pengembalian>.CreateAsync(menu.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Pengembalians/Details/5
